@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+.git
+.gitignore
+.env*.local
+README.md
+CLAUDE.md
+AGENTS.md
+Dockerfile*
+docker-compose*
+*.log
+*.zip
+*.tar.gz
