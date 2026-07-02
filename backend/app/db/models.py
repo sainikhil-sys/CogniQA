@@ -79,3 +79,57 @@ class RepoEmbedding(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     
     repository = relationship("Repository", back_populates="embeddings")
+
+from sqlalchemy.dialects.postgresql import JSONB
+
+class ActivityLog(Base):
+    __tablename__ = "activity_logs"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    action = Column(String, nullable=False)
+    repo_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=True)
+    details = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+
+class Billing(Base):
+    __tablename__ = "billing"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    plan = Column(String, default="Starter", nullable=False)
+    subscription_status = Column(String, default="active", nullable=False)
+    razorpay_payment_id = Column(String, nullable=True)
+    razorpay_order_id = Column(String, nullable=True)
+    amount = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+
+class Integration(Base):
+    __tablename__ = "integrations"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String, nullable=False) # 'github', 'vercel', 'netlify', etc.
+    token = Column(String, nullable=False)
+    status = Column(String, default="active", nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+
+class AgentTask(Base):
+    __tablename__ = "agent_tasks"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    repo_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    prompt = Column(String, nullable=False)
+    branch_name = Column(String, nullable=True)
+    deployment_target = Column(String, default="vercel", nullable=True)
+    status = Column(String, default="Ingestion", nullable=False)
+    task_list = Column(JSONB, nullable=True)
+    affected_files = Column(JSONB, nullable=True)
+    code_diff = Column(String, nullable=True)
+    validation_report = Column(JSONB, nullable=True)
+    pr_url = Column(String, nullable=True)
+    deployment_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow, nullable=False)
+

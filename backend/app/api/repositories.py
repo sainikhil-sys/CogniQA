@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.security import verify_token, rate_limit_check
 from backend.app.db.session import get_db
 from backend.app.db.models import Repository, RepoEmbedding
+from backend.app.services.parser import RepositoryParser
 
 router = APIRouter()
 

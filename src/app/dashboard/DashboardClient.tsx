@@ -216,7 +216,14 @@ export default function DashboardPage() {
               </span>
             </Link>
             <span className="h-4 w-px bg-zinc-800" />
-            <span className="text-xs text-zinc-500 font-mono">Console</span>
+            <nav className="hidden md:flex items-center gap-4 text-xs font-semibold text-zinc-400">
+              <Link href="/dashboard" className="text-white transition-colors">Codebases</Link>
+              <Link href="/agent" className="hover:text-white transition-colors">Agent Console</Link>
+              <Link href="/reports" className="hover:text-white transition-colors">Reports</Link>
+              <Link href="/billing" className="hover:text-white transition-colors">Billing</Link>
+              <Link href="/settings" className="hover:text-white transition-colors">Settings</Link>
+              <Link href="/admin" className="hover:text-white transition-colors">Admin Panel</Link>
+            </nav>
           </div>
 
           <div className="flex items-center gap-4">
@@ -396,22 +403,36 @@ export default function DashboardPage() {
             <div className="space-y-3.5 text-xs">
               {repositories.length > 0 ? (
                 <div className="space-y-3">
-                  <div className="bg-zinc-900/30 border border-zinc-900 p-3.5 rounded-lg space-y-1.5">
-                    <span className="font-semibold text-yellow-400 flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5" /> Security Vulnerability
-                    </span>
-                    <p className="text-[11px] text-zinc-400 font-mono leading-normal">
-                      Potential exposed postgres URI secret detected inside middleware code parsing.
-                    </p>
-                  </div>
-                  <div className="bg-zinc-900/30 border border-zinc-900 p-3.5 rounded-lg space-y-1.5">
-                    <span className="font-semibold text-cyan-400 flex items-center gap-1">
-                      <Cpu className="w-3.5 h-3.5" /> Performance Warning
-                    </span>
-                    <p className="text-[11px] text-zinc-400 font-mono leading-normal">
-                      Sequential blocking HTTP routes found inside AST dependencies layout.
-                    </p>
-                  </div>
+                  {repositories.some(r => r.status === "Indexing") && (
+                    <div className="bg-yellow-950/20 border border-yellow-900/30 p-3.5 rounded-lg space-y-1.5">
+                      <span className="font-semibold text-yellow-400 flex items-center gap-1">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Compiler Index Active
+                      </span>
+                      <p className="text-[11px] text-zinc-400 font-mono leading-normal">
+                        AST parsing engine is currently scanning module imports and compiling vector chunks.
+                      </p>
+                    </div>
+                  )}
+                  {repositories.some(r => r.status === "Failed") && (
+                    <div className="bg-red-950/20 border border-red-900/30 p-3.5 rounded-lg space-y-1.5">
+                      <span className="font-semibold text-red-400 flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5" /> Code Index Failure
+                      </span>
+                      <p className="text-[11px] text-zinc-400 font-mono leading-normal">
+                        One or more repository clone pipelines failed. Verify Git credential keys or URLs.
+                      </p>
+                    </div>
+                  )}
+                  {repositories.every(r => r.status === "Indexed") && (
+                    <div className="bg-emerald-950/20 border border-emerald-900/30 p-3.5 rounded-lg space-y-1.5">
+                      <span className="font-semibold text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> All Systems Checked
+                      </span>
+                      <p className="text-[11px] text-zinc-400 font-mono leading-normal">
+                        All codebase integrations are fully compiled. Complexity and security scores are updated.
+                      </p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-zinc-500 text-xs py-4 text-center">Connect repositories to generate AI insights.</p>

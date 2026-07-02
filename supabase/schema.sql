@@ -149,3 +149,96 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- =========================================================================
+-- ADDITIONAL SAAS MODULES TABLES
+-- =========================================================================
+
+-- 7. ACTIVITY LOGS TABLE
+CREATE TABLE IF NOT EXISTS public.activity_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  action TEXT NOT NULL,
+  repo_id UUID REFERENCES public.repositories(id) ON DELETE CASCADE,
+  details TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 8. BILLING TABLE
+CREATE TABLE IF NOT EXISTS public.billing (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  plan TEXT NOT NULL DEFAULT 'Starter',
+  subscription_status TEXT NOT NULL DEFAULT 'active',
+  razorpay_payment_id TEXT,
+  razorpay_order_id TEXT,
+  amount INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 9. INTEGRATIONS TABLE
+CREATE TABLE IF NOT EXISTS public.integrations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  provider TEXT NOT NULL,
+  token TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 10. AGENT TASKS TABLE (AI Engineering Agent console workflows)
+CREATE TABLE IF NOT EXISTS public.agent_tasks (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  repo_id UUID REFERENCES public.repositories(id) ON DELETE CASCADE NOT NULL,
+  prompt TEXT NOT NULL,
+  branch_name TEXT,
+  deployment_target TEXT DEFAULT 'vercel',
+  status TEXT NOT NULL DEFAULT 'Ingestion',
+  task_list JSONB,
+  affected_files JSONB,
+  code_diff TEXT,
+  validation_report JSONB,
+  pr_url TEXT,
+  deployment_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- =========================================================================
+-- ROW LEVEL SECURITY (RLS) FOR ADDITIONAL TABLES
+-- =========================================================================
+
+ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.billing ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.integrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.agent_tasks ENABLE ROW LEVEL SECURITY;
+
+-- Activity Logs Policies
+CREATE POLICY "Allow users to view their own activity logs"
+  ON public.activity_logs FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to insert their own activity logs"
+  ON public.activity_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Billing Policies
+CREATE POLICY "Allow users to view their own billing data"
+  ON public.billing FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to update their own billing data"
+  ON public.billing FOR ALL USING (auth.uid() = user_id);
+
+-- Integrations Policies
+CREATE POLICY "Allow users to view their own integrations"
+  ON public.integrations FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to insert/update their own integrations"
+  ON public.integrations FOR ALL USING (auth.uid() = user_id);
+
+-- Agent Tasks Policies
+CREATE POLICY "Allow users to view their own agent tasks"
+  ON public.agent_tasks FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to insert/update their own agent tasks"
+  ON public.agent_tasks FOR ALL USING (auth.uid() = user_id);
+
