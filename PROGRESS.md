@@ -31,3 +31,19 @@
   - GitLab, Bitbucket integrations, and SAML/SSO enterprise auth (pre-approved scope).
 - **Deviations & Rationale**:
   - The local migrations could not be run against the Supabase CLI directly due to a broken/missing CLI shim binary in the host command line. Type-safety was still achieved by writing the explicit `src/types/supabase.ts` definitions, and database constraints/policies were structurally validated using Vitest client mocking.
+
+## Phase 2 — Auth & Orgs
+- **Status**: Completed
+- **Deliverables**:
+  - **Protected Routes**: Wired and tested session refresh and route checks. Protected route matcher in `src/proxy.ts` redirects unauthenticated traffic trying to access `/dashboard`, `/settings`, `/analysis`, `/agent`, `/reports`, `/billing`, and `/admin` to `/login`.
+  - **Organization CRUD Actions**: Created server actions in `src/features/orgs/actions.ts` to fetch user organizations (`getUserOrganizations`), create new organizations (`createOrganization`), load workspace statistics (`getOrganizationData`), and configure segment teams (`createTeam`).
+  - **Email Invitations & Accept Flow**: Configured Resend email client integration to send HTML emails for team onboarding. Created invitation generation action (`inviteMember`) and a token acceptance route `/auth/accept-invite` backed by the `acceptInvitation` server action.
+  - **Multi-Factor Authentication (MFA)**: Built a security panel in `SettingsClient.tsx` that leverages Supabase Auth MFA APIs to check assurance levels, enroll TOTP authenticators, generate QR code SVGs, challenge/verify 6-digit codes, and unenroll active factors.
+  - **Magic Links & Password Recovery**: Added tabbed login modes in `/login` allowing password credentials, magic sign-in links (`signInWithOtp`), and forgot-password recovery (`resetPasswordForEmail`). Implemented credential update form in `/auth/reset-password`.
+  - **Unit Testing**: Wrote a complete test suite in `tests/orgs.test.ts` verifying organization creation, role permission gating, token validation, and expiry constraints with 100% success rate.
+- **Coming Soon**:
+  - GitLab, Bitbucket integrations, and SAML/SSO enterprise auth (pre-approved scope).
+- **Deviations & Rationale**:
+  - Suspense boundaries were added to `/auth/accept-invite` to satisfy Next.js static generation bails caused by browser `useSearchParams()` calls.
+  - Standard Next.js `src/middleware.ts` was deleted in favor of the existing `./src/proxy.ts` configuration, as the custom build pipeline expects `./src/proxy.ts` only.
+
