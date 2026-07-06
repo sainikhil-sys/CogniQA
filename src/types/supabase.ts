@@ -14,6 +14,7 @@ export interface Database {
           id: string
           email: string
           full_name: string | null
+          is_platform_admin: boolean
           created_at: string
           updated_at: string
         }
@@ -21,6 +22,7 @@ export interface Database {
           id: string
           email: string
           full_name?: string | null
+          is_platform_admin?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -28,6 +30,7 @@ export interface Database {
           id?: string
           email?: string
           full_name?: string | null
+          is_platform_admin?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -586,8 +589,9 @@ export interface Database {
         Row: {
           id: string
           organization_id: string
-          stripe_subscription_id: string
-          stripe_customer_id: string
+          provider: 'razorpay' | 'stripe'
+          provider_subscription_id: string
+          provider_customer_id: string
           plan_id: string
           status: string
           current_period_start: string
@@ -598,8 +602,9 @@ export interface Database {
         Insert: {
           id?: string
           organization_id: string
-          stripe_subscription_id: string
-          stripe_customer_id: string
+          provider?: 'razorpay' | 'stripe'
+          provider_subscription_id: string
+          provider_customer_id: string
           plan_id: string
           status: string
           current_period_start: string
@@ -610,8 +615,9 @@ export interface Database {
         Update: {
           id?: string
           organization_id?: string
-          stripe_subscription_id?: string
-          stripe_customer_id?: string
+          provider?: 'razorpay' | 'stripe'
+          provider_subscription_id?: string
+          provider_customer_id?: string
           plan_id?: string
           status?: string
           current_period_start?: string
@@ -624,7 +630,8 @@ export interface Database {
         Row: {
           id: string
           organization_id: string
-          stripe_invoice_id: string
+          provider: 'razorpay' | 'stripe'
+          provider_invoice_id: string
           amount_due: number
           amount_paid: number
           status: string
@@ -634,7 +641,8 @@ export interface Database {
         Insert: {
           id?: string
           organization_id: string
-          stripe_invoice_id: string
+          provider?: 'razorpay' | 'stripe'
+          provider_invoice_id: string
           amount_due: number
           amount_paid: number
           status: string
@@ -644,7 +652,8 @@ export interface Database {
         Update: {
           id?: string
           organization_id?: string
-          stripe_invoice_id?: string
+          provider?: 'razorpay' | 'stripe'
+          provider_invoice_id?: string
           amount_due?: number
           amount_paid?: number
           status?: string
@@ -962,6 +971,50 @@ export interface Database {
           updated_at?: string
         }
       }
+      agent_tasks: {
+        Row: {
+          id: string
+          user_id: string
+          repo_id: string
+          prompt: string
+          branch_name: string | null
+          status: 'Ingestion' | 'PromptAnalysis' | 'CodeIntelligence' | 'CodeGeneration' | 'PendingApproval' | 'Approved' | 'Rejected' | 'Failed'
+          task_list: Json | null
+          affected_files: Json | null
+          code_diff: string | null
+          error_message: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          repo_id: string
+          prompt: string
+          branch_name?: string | null
+          status?: 'Ingestion' | 'PromptAnalysis' | 'CodeIntelligence' | 'CodeGeneration' | 'PendingApproval' | 'Approved' | 'Rejected' | 'Failed'
+          task_list?: Json | null
+          affected_files?: Json | null
+          code_diff?: string | null
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          repo_id?: string
+          prompt?: string
+          branch_name?: string | null
+          status?: 'Ingestion' | 'PromptAnalysis' | 'CodeIntelligence' | 'CodeGeneration' | 'PendingApproval' | 'Approved' | 'Rejected' | 'Failed'
+          task_list?: Json | null
+          affected_files?: Json | null
+          code_diff?: string | null
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -978,6 +1031,20 @@ export interface Database {
           org_id: string
         }
         Returns: string
+      }
+      match_embeddings: {
+        Args: {
+          p_repo_id: string
+          p_query_embedding: string
+          p_match_count?: number
+        }
+        Returns: {
+          id: string
+          file_path: string
+          chunk_index: number
+          chunk_content: string
+          similarity: number
+        }[]
       }
     }
     Enums: {

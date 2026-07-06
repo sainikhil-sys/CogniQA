@@ -7,38 +7,21 @@ const clientSchema = z.object({
   NEXT_PUBLIC_SENTRY_DSN: z.string().url('NEXT_PUBLIC_SENTRY_DSN must be a valid URL').optional().or(z.literal('')),
 });
 
+/**
+ * Server-side variables.
+ *
+ * Only the Supabase service key is hard-required. Integration credentials
+ * (AI, payments, email, encryption) are OPTIONAL: when absent, the related
+ * feature surfaces an explicit "not configured" state in the product.
+ * Features NEVER fall back to simulated behaviour when a credential is missing.
+ */
 const serverSchema = z.object({
-  // Supabase Service Role Key
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY is required'),
-  
-  // Redis
-  UPSTASH_REDIS_REST_URL: z.string().url('UPSTASH_REDIS_REST_URL must be a valid URL'),
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(1, 'UPSTASH_REDIS_REST_TOKEN is required'),
 
-  // Inngest
-  INNGEST_EVENT_KEY: z.string().min(1, 'INNGEST_EVENT_KEY is required'),
-  INNGEST_SIGNING_KEY: z.string().min(1, 'INNGEST_SIGNING_KEY is required'),
+  // Secrets encryption (required to store third-party tokens at rest)
+  ENCRYPTION_KEY: z.string().min(32).optional(),
 
-  // Resend
-  RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
-
-  // Stripe
-  STRIPE_SECRET_KEY: z.string().min(1, 'STRIPE_SECRET_KEY is required'),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1, 'STRIPE_WEBHOOK_SECRET is required'),
-  STRIPE_STARTER_PRICE_ID: z.string().min(1, 'STRIPE_STARTER_PRICE_ID is required'),
-  STRIPE_PRO_PRICE_ID: z.string().min(1, 'STRIPE_PRO_PRICE_ID is required'),
-  STRIPE_ENTERPRISE_PRICE_ID: z.string().min(1, 'STRIPE_ENTERPRISE_PRICE_ID is required'),
-
-  // OAuth
-  GITHUB_CLIENT_ID: z.string().min(1, 'GITHUB_CLIENT_ID is required'),
-  GITHUB_CLIENT_SECRET: z.string().min(1, 'GITHUB_CLIENT_SECRET is required'),
-  GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
-  GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET is required'),
-
-  // Encryption Key
-  ENCRYPTION_KEY: z.string().min(32, 'ENCRYPTION_KEY must be at least 32 characters long for AES-256-GCM'),
-
-  // Optional AI Provider Keys
+  // AI providers
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
@@ -46,13 +29,25 @@ const serverSchema = z.object({
   GROQ_API_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),
   OLLAMA_BASE_URL: z.string().url().optional().or(z.literal('')),
+
+  // Payments (Razorpay)
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+
+  // Email
+  RESEND_API_KEY: z.string().optional(),
+
+  // OAuth
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
 
 const isServer = typeof window === 'undefined';
 
 function validateEnv() {
   if (process.env.SKIP_ENV_VALIDATION === 'true' || process.env.NEXT_PHASE === 'phase-production-build') {
-    // Return empty/mocked values of the expected type to avoid runtime errors during build compilation
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return {} as any;
   }
@@ -75,25 +70,8 @@ function validateEnv() {
     return { ...clientResult.data } as z.infer<typeof clientSchema>;
   }
 
-  // Handle service role key aliased as SUPABASE_SECRET_KEY
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
-
   const serverData = {
-    SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
-    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
-    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
-    INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
-    INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
-    RESEND_API_KEY: process.env.RESEND_API_KEY,
-    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
-    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-    STRIPE_STARTER_PRICE_ID: process.env.STRIPE_STARTER_PRICE_ID,
-    STRIPE_PRO_PRICE_ID: process.env.STRIPE_PRO_PRICE_ID,
-    STRIPE_ENTERPRISE_PRICE_ID: process.env.STRIPE_ENTERPRISE_PRICE_ID,
-    GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
-    GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
-    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
@@ -102,6 +80,13 @@ function validateEnv() {
     GROQ_API_KEY: process.env.GROQ_API_KEY,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL,
+    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+    GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   };
 
   const serverResult = serverSchema.safeParse(serverData);
@@ -109,13 +94,12 @@ function validateEnv() {
     console.error('❌ Invalid server-side environment variables:');
     const formattedErrors = serverResult.error.format();
     console.error(JSON.stringify(formattedErrors, null, 2));
-    
-    // Detailed output of what's missing
+
     const missing = Object.entries(formattedErrors)
       .filter(([key]) => key !== '_errors')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map(([key, val]) => `${key}: ${(val as any)._errors?.join(', ')}`);
-    
+
     throw new Error(`Invalid server environment configuration:\n- ${missing.join('\n- ')}`);
   }
 
@@ -123,3 +107,14 @@ function validateEnv() {
 }
 
 export const env = validateEnv();
+
+/**
+ * Feature gates derived from real configuration. Consumers surface an
+ * explicit "not configured" state when a gate is closed — never fake output.
+ */
+export const features = {
+  openai: (): boolean => Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-')),
+  razorpay: (): boolean => Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
+  resend: (): boolean => Boolean(process.env.RESEND_API_KEY),
+  encryption: (): boolean => Boolean(process.env.ENCRYPTION_KEY && process.env.ENCRYPTION_KEY.length >= 32),
+};
