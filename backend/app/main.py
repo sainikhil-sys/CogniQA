@@ -1,7 +1,6 @@
 import time
 import os
 import sentry_sdk
-from sentry_sdk.integrations.fastapi import FastAPIIntegration
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
@@ -9,7 +8,6 @@ from backend.app.core.config import settings
 # Initialize Sentry Backend monitoring
 sentry_sdk.init(
     dsn=os.environ.get("SENTRY_DSN", "https://d4d3a09c56b35cb10fcab4a0b96ed8c0@o4511663978381312.ingest.us.sentry.io/4511663980544005"),
-    integrations=[FastAPIIntegration()],
     traces_sample_rate=1.0,
 )
 from backend.app.api import auth, repositories, analyze, chat, reports, health, billing, settings, admin, agent

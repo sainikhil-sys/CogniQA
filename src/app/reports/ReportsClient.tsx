@@ -342,7 +342,7 @@ https://cogniqa.systems
 
                   <div className="h-64 mt-4">
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="50%" radius="70%" data={radarData}>
+                      <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                         <PolarGrid stroke="#1f1f23" />
                         <PolarAngleAxis dataKey="subject" stroke="#a1a1aa" fontSize={11} />
                         <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#3f3f46" fontSize={9} />

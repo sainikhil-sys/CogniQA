@@ -18,6 +18,7 @@ export default function SignupPage() {
   const supabase = createClient();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
 
@@ -48,9 +49,10 @@ export default function SignupPage() {
 
       console.log("Supabase signup credentials registered successfully.");
       router.replace("/dashboard");
-    } catch (err: any) {
-      console.error("Signup exception caught inside handleSignup():", err);
-      setErrorMessage(err.message || "An unexpected error occurred during signup.");
+    } catch (err: unknown) {
+      const errorObj = err as Error;
+      console.error("Signup exception caught inside handleSignup():", errorObj);
+      setErrorMessage(errorObj.message || "An unexpected error occurred during signup.");
     } finally {
       setIsLoading(false);
     }
@@ -73,9 +75,10 @@ export default function SignupPage() {
         console.error("Supabase OAuth signup failed:", error.message);
         setErrorMessage(error.message);
       }
-    } catch (err: any) {
-      console.error("Supabase OAuth signup exception:", err);
-      setErrorMessage(err.message || "OAuth authentication failed");
+    } catch (err: unknown) {
+      const errorObj = err as Error;
+      console.error("Supabase OAuth signup exception:", errorObj);
+      setErrorMessage(errorObj.message || "OAuth authentication failed");
     } finally {
       setIsLoading(false);
     }
