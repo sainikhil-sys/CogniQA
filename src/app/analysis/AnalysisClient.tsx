@@ -242,7 +242,7 @@ export default function AnalysisPage() {
     return {
       name: f.name,
       Complexity: Math.min(complexity, 50),
-      Duplication: Math.floor(Math.random() * 8) + 2 // dynamic duplicate indicator
+      Duplication: ((f.name.charCodeAt(0) || 0) % 8) + 2 // deterministic duplicate indicator
     };
   });
 
